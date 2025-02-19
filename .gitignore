@@ -45,7 +45,8 @@ logs/
 
 ### IDE ###
 # PyCharm
-.idea/
+.idea
+.idea/*
 *.iml
 *.iws
 .idea_modules/
