@@ -1,0 +1,23 @@
+# requirements/production.txt
+-r base.txt
+
+# Security
+django-honeypot==1.0.3
+django-defender==0.9.8
+
+# Performance
+django-silk==5.0.4
+django-query-counter==0.3.2
+
+# Monitoring
+newrelic==9.6.0
+elastic-apm==6.19.0
+
+# Cache
+django-redis==5.4.0
+python-memcached==1.59
+
+# Production Server
+gunicorn==21.2.0
+uvicorn[standard]==0.27.1
+whitenoise==6.6.0

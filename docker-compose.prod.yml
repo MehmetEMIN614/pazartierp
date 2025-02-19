@@ -1,0 +1,69 @@
+version: '3.3'
+
+services:
+  web:
+    container_name: pazartierp_web
+    env_file:
+      - ./prod.env
+    build: .
+    volumes:
+      - .:/app
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    networks:
+      - pazartierp_network
+
+  celery:
+    build:
+      context: .
+    container_name: pazartierp_celery
+    command: celery -A core worker -c 3 --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    networks:
+      - pazartierp_network
+
+  celery-beat:
+    build:
+      context: .
+    container_name: pazartierp_celery-beat
+    command: celery -A core beat --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - celery
+    networks:
+      - pazartierp_network
+
+  redis:
+    image: "redis:alpine"
+    container_name: pazartierp_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - pazartierp_network
+
+  nginx:
+    container_name: pazartierp_nginx
+    image: nginx
+    ports:
+      - "8082:80"   # Change this port if necessary
+      - "8445:443"  # Change this port if necessary
+    volumes:
+      - ./core/etc/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./core/etc/nginx/certs:/etc/nginx/ssl
+      - ./staticfiles:/pazartierp/staticfiles
+      - ./media:/pazartierp/media
+    depends_on:
+      - web
+    networks:
+      - pazartierp_network
+
+networks:
+  pazartierp_network:
+    driver: bridge
