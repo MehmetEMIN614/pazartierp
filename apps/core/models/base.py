@@ -1,5 +1,5 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
@@ -25,7 +25,8 @@ class BaseModel(models.Model):
     org = models.ForeignKey(
         "core.Org",
         on_delete=models.CASCADE,
-        verbose_name=_("Company")
+        verbose_name=_("Org"),
+        related_name="%(class)s",
     )
 
     class Meta:
@@ -38,7 +39,7 @@ class BaseModel(models.Model):
 
 
 class BaseModelNoOrg(models.Model):
-    """Base model for models that don't need company field."""
+    """Base model for models that don't need Org field."""
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)

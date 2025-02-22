@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from apps.core.models.org import OrgSetting, Org
-from apps.core.serializers.base import BaseModelSerializer
 
 
 class OrgSettingSerializer(serializers.ModelSerializer):
@@ -10,16 +9,12 @@ class OrgSettingSerializer(serializers.ModelSerializer):
         fields = ('language', 'timezone', 'decimal_precision')
 
 
-class OrgSerializer(BaseModelSerializer):
+class OrgSerializer(serializers.ModelSerializer):
     settings = OrgSettingSerializer(required=False)
-    user_count = serializers.SerializerMethodField()
 
-    class Meta(BaseModelSerializer.Meta):
+    class Meta:
         model = Org
-        fields = BaseModelSerializer.Meta.fields + ('name', 'address', 'note', 'settings', 'user_count')
-
-    def get_user_count(self, obj):
-        return obj.user_set.count()
+        fields = ('name', 'address', 'note', 'settings')
 
     def create(self, validated_data):
         settings_data = validated_data.pop('settings', None)

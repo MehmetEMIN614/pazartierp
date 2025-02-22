@@ -1,8 +1,8 @@
-from django.db import models
+from decimal import Decimal
+
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from decimal import Decimal
-import requests
+from django.db import models
 
 from apps.core.models.base import BaseModel
 
@@ -17,7 +17,7 @@ class Currencies(models.IntegerChoices):
 class CurrencyRate(BaseModel):
     from_currency = models.IntegerField(choices=Currencies.choices)
     to_currency = models.IntegerField(choices=Currencies.choices)
-    rate = models.DecimalField(max_digits=10, decimal_places=6)
+    rate = models.DecimalField(decimal_places=6, max_digits=10)
 
     class Meta:
         unique_together = ['from_currency', 'to_currency']

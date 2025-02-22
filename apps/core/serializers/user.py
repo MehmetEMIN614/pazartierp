@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
 
-from apps.core.models.user import UserSetting
+from apps.core.models.user import User, UserSetting
 
 
 class UserSettingSerializer(serializers.ModelSerializer):
@@ -12,20 +11,20 @@ class UserSettingSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     settings = UserSettingSerializer(required=False)
-    organizations = serializers.SerializerMethodField()
+    orgs = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('id', 'email', 'phone', 'first_name', 'last_name', 'full_name',
-                  'role', 'is_active', 'organizations', 'settings',
+                  'role', 'is_active', 'orgs', 'settings',
                   'phone_is_verified', 'mail_is_verified', 'current_org')
         read_only_fields = ('phone_is_verified', 'mail_is_verified')
         extra_kwargs = {
             'password': {'write_only': True}
         }
 
-    def get_organizations(self, obj):
+    def get_orgs(self, obj):
         return obj.orgs.values('id', 'name')
 
     def get_full_name(self, obj):

@@ -1,13 +1,107 @@
-# apps/core/admin.py
-from django.contrib import admin
 from django.apps import apps
+from django.contrib import admin
 from django.contrib.admin.exceptions import NotRegistered
 from django.contrib.admin.sites import AlreadyRegistered
-from django.db import models
-from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-User = get_user_model()  # Get the custom User model
+User = get_user_model()
+
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    """Enhanced admin view for custom User model"""
+    list_display = [
+        'email',
+        'first_name',
+        'last_name',
+        'role',
+        'is_active',
+        'is_staff',
+        'phone_is_verified',
+        'mail_is_verified'
+    ]
+
+    list_filter = [
+        'is_active',
+        'is_staff',
+        'role',
+        'phone_is_verified',
+        'mail_is_verified',
+        'groups'
+    ]
+
+    search_fields = [
+        'email',
+        'first_name',
+        'last_name',
+        'phone'
+    ]
+
+    # Customize fieldsets to include custom fields
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        (_('Personal info'), {
+            'fields': (
+                'first_name',
+                'last_name',
+                'phone',
+                'role'
+            )
+        }),
+        (_('Verification'), {
+            'fields': (
+                'phone_is_verified',
+                'mail_is_verified'
+            )
+        }),
+        (_('Organizations'), {
+            'fields': (
+                'orgs',
+                'current_org'
+            )
+        }),
+        (_('Permissions'), {
+            'fields': (
+                'is_active',
+                'is_staff',
+                'is_superuser',
+                'groups',
+                'user_permissions'
+            )
+        }),
+        (_('Important dates'), {
+            'fields': (
+                'last_login',
+                'date_joined'
+            )
+        }),
+    )
+
+    # Customize add form
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'email',
+                'password1',
+                'password2',
+                'first_name',
+                'last_name',
+                'role',
+                'phone'
+            ),
+        }),
+    )
+
+    # Ordering
+    ordering = ['email']
+
+    # Filter horizontal for many-to-many fields
+    filter_horizontal = ('orgs',)
 
 
 class CustomModelAdmin(admin.ModelAdmin):
@@ -30,24 +124,6 @@ class CustomModelAdmin(admin.ModelAdmin):
 
 def auto_register_models():
     """Automatically register all models with Admin."""
-
-    # Custom User admin
-    @admin.register(User)
-    class CustomUserAdmin(admin.ModelAdmin):
-        list_display = ['email', 'first_name', 'last_name', 'is_active', 'is_staff']
-        list_filter = ['is_active', 'is_staff', 'groups']
-        search_fields = ['email', 'first_name', 'last_name']
-        fieldsets = (
-            ('Personal Info', {
-                'fields': ('email', 'first_name', 'last_name', 'password')
-            }),
-            ('Permissions', {
-                'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
-            }),
-            ('Important dates', {
-                'fields': ('last_login', 'date_joined')
-            }),
-        )
 
     # Try to unregister Group if it's registered
     try:

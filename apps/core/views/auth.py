@@ -1,49 +1,51 @@
+from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.permissions import IsAuthenticated
-from apps.core.utils.throttles import BurstRateThrottle, CustomUserThrottle
+from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+User = get_user_model()
 
 
-class LoginView(APIView):
+class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
-    throttle_classes = [BurstRateThrottle]
+    throttle_classes = [UserRateThrottle]
 
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-
-        if not username or not password:
+    def post(self, request, *args, **kwargs):
+        # Check if org_id is provided
+        if not request.data.get('org_id'):
             return Response({
-                'error': 'Please provide both username and password'
+                'error': 'Organization ID is required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        user = authenticate(username=username, password=password)
+        response = super().post(request, *args, **kwargs)
 
-        if user is None:
+        # Get user from email after successful authentication
+        user = User.objects.get(email=request.data.get('email'))
+
+        # Check if user has any organizations
+        if not user.orgs.exists():
             return Response({
-                'error': 'Invalid credentials'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+                'error': 'User has no organization access'
+            }, status=status.HTTP_403_FORBIDDEN)
 
-        token = AccessToken.for_user(user)
+        try:
+            org = user.orgs.get(id=request.data['org_id'], active=True)
+        except:
+            return Response({
+                'error': 'Invalid organization ID',
+                'available_orgs': user.orgs.filter(active=True).values('id', 'name')
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Set current organization
+        user.set_current_org(org)
 
         return Response({
-            'access_token': str(token),
-            'user_id': user.id,
-            'username': user.username
+            'access_token': response.data['access'],
+            'current_org': {
+                'id': org.id,
+                'name': org.name
+            },
+            'available_orgs': user.orgs.filter(active=True).values('id', 'name')
         })
-
-
-class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
-    throttle_classes = [CustomUserThrottle]
-
-    def post(self, request):
-        # With JWT, server-side logout isn't necessary
-        # The client should just remove the token
-        return Response({
-            'message': 'Successfully logged out'
-        }, status=status.HTTP_200_OK)

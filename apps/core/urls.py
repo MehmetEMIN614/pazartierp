@@ -1,8 +1,12 @@
 from django.urls import path
 
-from apps.core.views.auth import LoginView, LogoutView
+from apps.core.views.auth import LoginView
+from apps.core.views.user import UserViewSet
 
 urlpatterns = [
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
+    # Auth
+    path('login', LoginView.as_view(), name='login'),
+
+    # User
+    path('users/<int:pk>', UserViewSet.as_view({'get': 'retrieve'})),
 ]

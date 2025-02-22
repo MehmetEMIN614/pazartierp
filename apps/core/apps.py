@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from django.db.models.signals import pre_save, post_save, pre_delete
 
 
 class CoreConfig(AppConfig):
@@ -8,4 +7,7 @@ class CoreConfig(AppConfig):
     label = 'core'
 
     def ready(self):
-        import apps.core.signals.audit
+        try:
+            import apps.core.signals.audit
+        except Exception as e:
+            print(f"Error loading signals: {e}")
